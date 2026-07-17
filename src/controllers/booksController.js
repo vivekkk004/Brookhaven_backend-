@@ -6,7 +6,7 @@ import path from 'path';
 // GET /books
 export const getBooks = async (req, res) => {
     try {
-        const { category, condition, minPrice, maxPrice, sortBy, search } = req.query;
+        const { category, condition, minPrice, maxPrice, sort, sortBy, search } = req.query;
         const { skip, limit, buildMeta } = getPagination(req.query);
 
         const filter = { isActive: true };
@@ -24,11 +24,15 @@ export const getBooks = async (req, res) => {
             filter.$text = { $search: search };
         }
 
+        // Accept both frontend sort formats:
+        // sortBy: 'price-low', 'price-high', 'rating', 'newest'
+        // sort:   'price', '-price', '-rating', '-createdAt'
+        const sortParam = sortBy || sort;
         let sortOption = { createdAt: -1 };
-        if (sortBy === 'price-low') sortOption = { price: 1 };
-        if (sortBy === 'price-high') sortOption = { price: -1 };
-        if (sortBy === 'rating') sortOption = { rating: -1 };
-        if (sortBy === 'newest') sortOption = { createdAt: -1 };
+        if (sortParam === 'price-low' || sortParam === 'price') sortOption = { price: 1 };
+        if (sortParam === 'price-high' || sortParam === '-price') sortOption = { price: -1 };
+        if (sortParam === 'rating' || sortParam === '-rating') sortOption = { rating: -1 };
+        if (sortParam === 'newest' || sortParam === '-createdAt') sortOption = { createdAt: -1 };
 
         const [books, total] = await Promise.all([
             Book.find(filter)

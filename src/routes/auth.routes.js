@@ -23,7 +23,7 @@ router.post('/login', authLimiter,
     auth.login
 );
 
-router.post('/logout', verifyToken, auth.logout);
+router.post('/logout', auth.logout);
 router.post('/refresh', auth.refresh);
 router.get('/me', verifyToken, auth.me);
 

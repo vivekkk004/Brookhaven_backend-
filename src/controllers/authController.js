@@ -4,7 +4,7 @@ import { sendSuccess, sendError } from '../utils/response.js';
 
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
 };
 
@@ -29,7 +29,7 @@ export const register = async (req, res) => {
         res.cookie('accessToken', accessToken, { ...COOKIE_OPTIONS, maxAge: 15 * 60 * 1000 });
         res.cookie('refreshToken', refreshToken, { ...COOKIE_OPTIONS, maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-        return sendSuccess(res, { user, accessToken }, 'Registered successfully', 201);
+        return sendSuccess(res, { user: user.toJSON(), accessToken }, 'Registered successfully', 201);
     } catch (err) {
         return sendError(res, err.message);
     }

@@ -4,13 +4,20 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const uploadDir = path.join(__dirname, '../../uploads/books');
+const uploadBooksDir = path.join(__dirname, '../../uploads/books');
+const uploadAvatarsDir = path.join(__dirname, '../../uploads/avatars');
 
-// Ensure directory exists
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+// Ensure directories exist
+[uploadBooksDir, uploadAvatarsDir].forEach(dir => {
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+});
 
 const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, uploadDir),
+    destination: (_req, file, cb) => {
+        // Route avatar uploads to the avatars directory
+        const isAvatar = file.fieldname === 'avatar';
+        cb(null, isAvatar ? uploadAvatarsDir : uploadBooksDir);
+    },
     filename: (_req, file, cb) => {
         const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
         cb(null, unique + path.extname(file.originalname));
@@ -30,3 +37,4 @@ const upload = multer({
 });
 
 export default upload;
+

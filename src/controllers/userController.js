@@ -22,7 +22,7 @@ export const updateProfile = async (req, res) => {
         if (name) user.name = name;
         if (phone) user.phone = phone;
         if (address) user.address = address;
-        if (req.file) user.avatar = `/uploads/books/${req.file.filename}`;
+        if (req.file) user.avatar = `/uploads/avatars/${req.file.filename}`;
 
         await user.save();
         return sendSuccess(res, user, 'Profile updated');

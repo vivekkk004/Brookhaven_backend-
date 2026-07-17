@@ -9,7 +9,7 @@ const envFile =
         ? '.env.production'
         : process.env.NODE_ENV === 'test'
             ? '.env.test'
-            : '.env';
+            : '.env.development';
 
 dotenv.config({ path: path.resolve(__dirname, '../../', envFile) });
 
