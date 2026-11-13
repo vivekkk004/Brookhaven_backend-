@@ -16,7 +16,7 @@ router.post('/conversations',
 );
 router.get('/conversations/:id/messages', chat.getMessages);
 router.post('/conversations/:id/messages',
-    body('text').notEmpty().withMessage('Message text required'),
+    body('text').trim().notEmpty().withMessage('Message text required').isLength({ max: 2000 }),
     validate,
     chat.sendMessage
 );

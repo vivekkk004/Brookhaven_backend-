@@ -1,6 +1,6 @@
 import Review from '../models/Review.js';
 import Book from '../models/Book.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
 import { getPagination } from '../utils/pagination.js';
 
 // GET /reviews/book/:bookId
@@ -19,7 +19,7 @@ export const getBookReviews = async (req, res) => {
 
         return sendSuccess(res, { reviews }, 'Reviews fetched', 200, buildMeta(total));
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -40,7 +40,7 @@ export const addReview = async (req, res) => {
         return sendSuccess(res, review, 'Review added', 201);
     } catch (err) {
         if (err.code === 11000) return sendError(res, 'You have already reviewed this book', 409);
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -56,7 +56,7 @@ export const updateReview = async (req, res) => {
         await review.save();
         return sendSuccess(res, review, 'Review updated');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -67,6 +67,6 @@ export const deleteReview = async (req, res) => {
         if (!review) return sendError(res, 'Review not found', 404);
         return sendSuccess(res, null, 'Review deleted');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };

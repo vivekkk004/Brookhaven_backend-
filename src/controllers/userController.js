@@ -1,14 +1,14 @@
 import User from '../models/User.js';
 import Order from '../models/Order.js';
 import Book from '../models/Book.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
 
 // GET /user/profile
 export const getProfile = async (req, res) => {
     try {
         return sendSuccess(res, req.user, 'Seller profile');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -27,7 +27,7 @@ export const updateProfile = async (req, res) => {
         await user.save();
         return sendSuccess(res, user, 'Profile updated');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -60,7 +60,7 @@ export const getDashboard = async (req, res) => {
             recentOrders,
         }, 'Seller dashboard');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -104,6 +104,6 @@ export const getEarnings = async (req, res) => {
             lifetime: lifetimeRevenue[0] || { total: 0, count: 0 },
         }, 'Earnings data');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };

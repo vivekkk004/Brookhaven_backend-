@@ -1,6 +1,7 @@
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import User from '../models/User.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
 
 // GET /chat/conversations
 export const getConversations = async (req, res) => {
@@ -18,7 +19,7 @@ export const getConversations = async (req, res) => {
 
         return sendSuccess(res, result, 'Conversations fetched');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -29,6 +30,8 @@ export const createConversation = async (req, res) => {
         if (String(userId) === String(req.user._id)) {
             return sendError(res, 'Cannot create conversation with yourself', 400);
         }
+        const participant = await User.findById(userId).select('_id isActive');
+        if (!participant || !participant.isActive) return sendError(res, 'User not found', 404);
 
         // Check if conversation already exists
         let conv = await Conversation.findOne({
@@ -40,9 +43,11 @@ export const createConversation = async (req, res) => {
         }
 
         await conv.populate('participants', 'name avatar role');
-        return sendSuccess(res, conv, 'Conversation ready', 201);
+        const result = conv.toObject();
+        result.otherUser = result.participants.find(p => String(p._id) !== String(req.user._id));
+        return sendSuccess(res, result, 'Conversation ready', 201);
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -61,7 +66,7 @@ export const getMessages = async (req, res) => {
 
         return sendSuccess(res, messages, 'Messages fetched');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -89,19 +94,25 @@ export const sendMessage = async (req, res) => {
         await msg.populate('sender', 'name avatar');
         return sendSuccess(res, msg, 'Message sent', 201);
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
 // PATCH /chat/conversations/:id/read
 export const markAsRead = async (req, res) => {
     try {
+        const conv = await Conversation.findOne({
+            _id: req.params.id,
+            participants: req.user._id,
+        });
+        if (!conv) return sendError(res, 'Conversation not found', 404);
+
         await Message.updateMany(
             { conversation: req.params.id, readBy: { $ne: req.user._id } },
             { $addToSet: { readBy: req.user._id } }
         );
         return sendSuccess(res, null, 'Messages marked as read');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };

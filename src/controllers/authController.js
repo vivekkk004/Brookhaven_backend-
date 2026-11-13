@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
 
 const COOKIE_OPTIONS = {
     httpOnly: true,
@@ -31,7 +31,8 @@ export const register = async (req, res) => {
 
         return sendSuccess(res, { user: user.toJSON(), accessToken }, 'Registered successfully', 201);
     } catch (err) {
-        return sendError(res, err.message);
+        if (err.code === 11000) return sendError(res, 'Email already registered', 409);
+        return sendControllerError(res, err);
     }
 };
 
@@ -56,7 +57,7 @@ export const login = async (req, res) => {
         const safeUser = user.toJSON();
         return sendSuccess(res, { user: safeUser, accessToken, role: user.role }, 'Login successful');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 

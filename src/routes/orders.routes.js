@@ -9,7 +9,9 @@ const router = Router();
 // Customer
 router.post('/', verifyToken, requireRole('customer'),
     body('bookId').notEmpty(),
+    body('quantity').optional().isInt({ min: 1, max: 100 }),
     body('shippingAddress').notEmpty(),
+    body('paymentMethod').optional().equals('cod'),
     validate,
     orders.placeOrder
 );

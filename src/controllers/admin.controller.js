@@ -1,7 +1,17 @@
 import User from '../models/User.js';
 import Book from '../models/Book.js';
 import Order from '../models/Order.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
+
+const getAdminPage = (query) => {
+    const parsedPage = Number.parseInt(query.page, 10);
+    const parsedLimit = Number.parseInt(query.limit, 10);
+    const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+    const limit = Number.isSafeInteger(parsedLimit) && parsedLimit > 0 ? Math.min(parsedLimit, 100) : 20;
+    return { page, limit, skip: (page - 1) * limit };
+};
+
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 100);
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 export const getDashboardStats = async (req, res) => {
@@ -55,26 +65,27 @@ export const getDashboardStats = async (req, res) => {
             })),
         });
     } catch (err) {
-        sendError(res, err.message, 500);
+        sendControllerError(res, err);
     }
 };
 
 // ─── Users Management ─────────────────────────────────────────────────────────
 export const getAllUsers = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search = '', role = '' } = req.query;
+        const { search = '', role = '' } = req.query;
+        const { page, limit, skip } = getAdminPage(req.query);
         const query = {};
         if (search) {
+            const safeSearch = escapeRegex(String(search));
             query.$or = [
-                { name: { $regex: search, $options: 'i' } },
-                { email: { $regex: search, $options: 'i' } },
+                { name: { $regex: safeSearch, $options: 'i' } },
+                { email: { $regex: safeSearch, $options: 'i' } },
             ];
         }
         if (role) query.role = role;
 
-        const skip = (Number(page) - 1) * Number(limit);
         const [users, total] = await Promise.all([
-            User.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)).lean(),
+            User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
             User.countDocuments(query),
         ]);
 
@@ -83,7 +94,7 @@ export const getAllUsers = async (req, res) => {
             pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) },
         });
     } catch (err) {
-        sendError(res, err.message, 500);
+        sendControllerError(res, err);
     }
 };
 
@@ -97,7 +108,7 @@ export const toggleUserStatus = async (req, res) => {
         await user.save();
         sendSuccess(res, { id: user._id, isActive: user.isActive }, `User ${user.isActive ? 'activated' : 'deactivated'}`);
     } catch (err) {
-        sendError(res, err.message, 500);
+        sendControllerError(res, err);
     }
 };
 
@@ -110,23 +121,23 @@ export const deleteUser = async (req, res) => {
         await User.findByIdAndDelete(req.params.id);
         sendSuccess(res, null, 'User deleted');
     } catch (err) {
-        sendError(res, err.message, 500);
+        sendControllerError(res, err);
     }
 };
 
 // ─── Books Management ─────────────────────────────────────────────────────────
 export const getAllAdminBooks = async (req, res) => {
     try {
-        const { page = 1, limit = 20, search = '' } = req.query;
-        const query = search ? { title: { $regex: search, $options: 'i' } } : {};
-        const skip = (Number(page) - 1) * Number(limit);
+        const { search = '' } = req.query;
+        const { page, limit, skip } = getAdminPage(req.query);
+        const query = search ? { title: { $regex: escapeRegex(String(search)), $options: 'i' } } : {};
 
         const [books, total] = await Promise.all([
             Book.find(query)
                 .populate('seller', 'name email')
                 .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(Number(limit))
+                .limit(limit)
                 .lean(),
             Book.countDocuments(query),
         ]);
@@ -136,7 +147,7 @@ export const getAllAdminBooks = async (req, res) => {
             pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) },
         });
     } catch (err) {
-        sendError(res, err.message, 500);
+        sendControllerError(res, err);
     }
 };
 
@@ -146,16 +157,16 @@ export const deleteAdminBook = async (req, res) => {
         if (!book) return sendError(res, 'Book not found', 404);
         sendSuccess(res, null, 'Book deleted');
     } catch (err) {
-        sendError(res, err.message, 500);
+        sendControllerError(res, err);
     }
 };
 
 // ─── Orders Management ────────────────────────────────────────────────────────
 export const getAllAdminOrders = async (req, res) => {
     try {
-        const { page = 1, limit = 20, status = '' } = req.query;
+        const { status = '' } = req.query;
+        const { page, limit, skip } = getAdminPage(req.query);
         const query = status ? { status } : {};
-        const skip = (Number(page) - 1) * Number(limit);
 
         const [orders, total] = await Promise.all([
             Order.find(query)
@@ -164,7 +175,7 @@ export const getAllAdminOrders = async (req, res) => {
                 .populate('book', 'title images price')
                 .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(Number(limit))
+                .limit(limit)
                 .lean(),
             Order.countDocuments(query),
         ]);
@@ -174,6 +185,6 @@ export const getAllAdminOrders = async (req, res) => {
             pagination: { page: Number(page), limit: Number(limit), total, pages: Math.ceil(total / limit) },
         });
     } catch (err) {
-        sendError(res, err.message, 500);
+        sendControllerError(res, err);
     }
 };

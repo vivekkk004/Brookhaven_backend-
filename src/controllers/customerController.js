@@ -1,14 +1,14 @@
 import User from '../models/User.js';
 import Order from '../models/Order.js';
 import Wishlist from '../models/Wishlist.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
 
 // GET /customer/profile
 export const getProfile = async (req, res) => {
     try {
         return sendSuccess(res, req.user, 'Customer profile');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -27,7 +27,7 @@ export const updateProfile = async (req, res) => {
         await user.save();
         return sendSuccess(res, user, 'Profile updated');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -51,6 +51,6 @@ export const getDashboard = async (req, res) => {
             recentOrders,
         }, 'Dashboard data');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };

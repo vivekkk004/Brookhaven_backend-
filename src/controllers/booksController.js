@@ -1,5 +1,5 @@
 import Book from '../models/Book.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
 import { getPagination } from '../utils/pagination.js';
 import path from 'path';
 
@@ -36,7 +36,7 @@ export const getBooks = async (req, res) => {
 
         const [books, total] = await Promise.all([
             Book.find(filter)
-                .populate('seller', 'name email avatar rating')
+                .populate('seller', 'name avatar')
                 .sort(sortOption)
                 .skip(skip)
                 .limit(limit)
@@ -46,7 +46,7 @@ export const getBooks = async (req, res) => {
 
         return sendSuccess(res, { books }, 'Books fetched', 200, buildMeta(total));
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -63,7 +63,7 @@ export const getMyBooks = async (req, res) => {
 
         return sendSuccess(res, { books }, 'My listings', 200, buildMeta(total));
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -71,12 +71,12 @@ export const getMyBooks = async (req, res) => {
 export const getBookById = async (req, res) => {
     try {
         const book = await Book.findOne({ _id: req.params.id, isActive: true })
-            .populate('seller', 'name email avatar');
+            .populate('seller', 'name avatar');
 
         if (!book) return sendError(res, 'Book not found', 404);
         return sendSuccess(res, book, 'Book details');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -100,7 +100,7 @@ export const createBook = async (req, res) => {
 
         return sendSuccess(res, book, 'Book listed successfully', 201);
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -120,7 +120,7 @@ export const updateBook = async (req, res) => {
         await book.save();
         return sendSuccess(res, book, 'Book updated');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -134,6 +134,6 @@ export const deleteBook = async (req, res) => {
         await book.save();
         return sendSuccess(res, null, 'Book removed from listings');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };

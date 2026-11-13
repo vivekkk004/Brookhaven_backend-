@@ -1,6 +1,6 @@
 import Wishlist from '../models/Wishlist.js';
 import Book from '../models/Book.js';
-import { sendSuccess, sendError } from '../utils/response.js';
+import { sendSuccess, sendError, sendControllerError } from '../utils/response.js';
 
 // GET /wishlist
 export const getWishlist = async (req, res) => {
@@ -10,7 +10,7 @@ export const getWishlist = async (req, res) => {
             .sort({ createdAt: -1 });
         return sendSuccess(res, items, 'Wishlist fetched');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -25,7 +25,7 @@ export const addToWishlist = async (req, res) => {
         return sendSuccess(res, item, 'Added to wishlist', 201);
     } catch (err) {
         if (err.code === 11000) return sendError(res, 'Already in wishlist', 409);
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -36,7 +36,7 @@ export const removeFromWishlist = async (req, res) => {
         if (!item) return sendError(res, 'Item not found in wishlist', 404);
         return sendSuccess(res, null, 'Removed from wishlist');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };
 
@@ -46,6 +46,6 @@ export const clearWishlist = async (req, res) => {
         await Wishlist.deleteMany({ customer: req.user._id });
         return sendSuccess(res, null, 'Wishlist cleared');
     } catch (err) {
-        return sendError(res, err.message);
+        return sendControllerError(res, err);
     }
 };

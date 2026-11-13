@@ -13,6 +13,17 @@ const envFile =
 
 dotenv.config({ path: path.resolve(__dirname, '../../', envFile) });
 
+if (process.env.NODE_ENV === 'production') {
+    const required = ['MONGO_URI_PROD', 'JWT_SECRET', 'JWT_REFRESH_SECRET', 'ADMIN_EMAIL', 'ADMIN_PASSWORD', 'APP_BASE_URL'];
+    const missing = required.filter(name => !process.env[name]);
+    for (const secretName of ['JWT_SECRET', 'JWT_REFRESH_SECRET', 'ADMIN_PASSWORD']) {
+        if (process.env[secretName] && process.env[secretName].length < 32) missing.push(`${secretName} (minimum 32 characters)`);
+    }
+    if (missing.length) {
+        throw new Error(`Missing required production environment variables: ${missing.join(', ')}`);
+    }
+}
+
 export const env = {
     NODE_ENV: process.env.NODE_ENV || 'development',
     PORT: parseInt(process.env.PORT) || 8000,
@@ -31,16 +42,6 @@ export const env = {
     ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@bookhaven.com',
     ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || 'Admin@123',
 
-    // Razorpay
-    RAZORPAY_KEY_ID: process.env.RAZORPAY_KEY_ID || '',
-    RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET || '',
-
-    // Email
-    EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    EMAIL_PORT: parseInt(process.env.EMAIL_PORT) || 587,
-    EMAIL_SECURE: process.env.EMAIL_SMTP_SECURE === 'true',
-    EMAIL_USER: process.env.EMAIL_USER || '',
-    EMAIL_PASS: process.env.EMAIL_PASS || '',
 };
 
 export default env;

@@ -8,8 +8,8 @@ import { authLimiter } from '../middleware/rateLimiter.js';
 const router = Router();
 
 router.post('/register', authLimiter,
-    body('name').notEmpty().withMessage('Name is required'),
-    body('email').isEmail().withMessage('Valid email required'),
+    body('name').trim().notEmpty().withMessage('Name is required'),
+    body('email').trim().normalizeEmail().isEmail().withMessage('Valid email required'),
     body('password').isLength({ min: 6 }).withMessage('Password min 6 chars'),
     body('role').optional().isIn(['customer', 'user']),
     validate,
@@ -17,7 +17,7 @@ router.post('/register', authLimiter,
 );
 
 router.post('/login', authLimiter,
-    body('email').isEmail(),
+    body('email').trim().normalizeEmail().isEmail(),
     body('password').notEmpty(),
     validate,
     auth.login
